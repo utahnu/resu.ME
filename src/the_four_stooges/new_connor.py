@@ -109,7 +109,7 @@ label p {{color: {INK}; font-weight: 500; font-size: 0.92rem;}}
 .avatar.photo {{padding: 0; overflow: hidden; background: white;}}
 .avatar.photo img {{width: 100%; height: 100%; object-fit: cover; display: block;}}
 .avatar + .avatar {{margin-left: -14px;}}
-.founder h4 {{font-family: 'Fraunces', Georgia, serif; color: {INK}; margin: 0 0 0.15rem; font-size: 1.1rem;
+.founder .founder-name {{font-family: 'Fraunces', Georgia, serif; color: {INK}; margin: 0 0 0.15rem; font-size: 1.1rem; font-weight: 600;
     width: 100%; text-align: center !important;}}
 .founder .role {{color: {CLAY}; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.5rem;}}
 .founder p {{color: {MUTED}; font-size: 0.9rem; line-height: 1.5; margin: 0;}}
@@ -227,25 +227,24 @@ def avatar_html(letter, color, stem):
 # ---------------------------------------------------------------------
 FOUNDERS = [
     {
-        "name": "The Bens",
+        "name": "The Ben's",
         "role": "Co-founders (times two)",
-        "bio": "Two Bens, one mission. What began as a serendipitous encounter this morning has turned into a lifelong friendship. As experts in the field of entymology, they give special priority to anyone with the name of Ben to succeed in life. ",
+        "bio": "Two Bens, one mission. Replace this with a short line about what the Ben's do and what they love about resu.ME.",
         "avatars": [("B", SAGE, "ben1"), ("B", CLAY, "ben2")],
     },
     {
         "name": "Wilbert the Guy",
         "role": "Co-founder",
-        "bio": "The main brain. Megamind. Legend. These are just a few of the many accolades he has collected over the years. Behind every great service is an even greater inventor, and his name is Wilbert. All the good we do here at resu.ME wouldn't be possible without him.",
+        "bio": "Replace this with a short line about Wilbert: his role, his background, and why he's here.",
         "avatars": [("W", "#7C9A92", "wilbert")],
     },
     {
         "name": "Connor",
         "role": "Co-founder",
-        "bio": "As someone who was once like you, unemployed and desperate and searching for a better solution, he came across the other co-founders of resu.ME at a school hackathon, and instantly realized the life changing opporunity for what it was.",
+        "bio": "Replace this with a short line about Connor: his role, his background, and why he's here.",
         "avatars": [("C", "#9A8F7C", "connor")],
     },
 ]
-
 
 
 # ---------------------------------------------------------------------
@@ -439,7 +438,8 @@ def render_founders():
         avatars = "".join(avatar_html(letter, color, stem) for letter, color, stem in f["avatars"])
         col.markdown(
             f'<div class="founder"><div class="avatars">{avatars}</div>'
-            f'<h4>{f["name"]}</h4><div class="role">{f["role"]}</div><p>{f["bio"]}</p></div>',
+            f'<div class="founder-name" role="heading" aria-level="4">{f["name"]}</div>'
+            f'<div class="role">{f["role"]}</div><p>{f["bio"]}</p></div>',
             unsafe_allow_html=True,
         )
 
