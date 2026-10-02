@@ -496,6 +496,19 @@ def render_founders():
         )
 
 
+def render_newsletter_section():
+    st.divider()
+    if st.button("Subscribe to newsletter", use_container_width=True, key="newsletter_subscribe"):
+        st.session_state["newsletter_form_open"] = True
+
+    if st.session_state.get("newsletter_form_open"):
+        st.text_input(
+            "Email address",
+            placeholder="you@example.com",
+            key="newsletter_email",
+        )
+
+
 # ---------------------------------------------------------------------
 # The page, top to bottom
 # ---------------------------------------------------------------------
@@ -514,5 +527,6 @@ render_resume_section(profile)
 if profile is not None:
     render_results(profile)
 render_founders()
+render_newsletter_section()
 
 st.markdown('<div class="footer-note">© resu.ME</div>', unsafe_allow_html=True)
