@@ -1,1 +1,1 @@
-print("hello, world!")
+"""resu.ME application package."""
