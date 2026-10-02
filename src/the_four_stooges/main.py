@@ -128,23 +128,96 @@ div[data-testid="stExpander"] {{background: white; border-radius: 10px;}}
 # ---------------------------------------------------------------------
 # Resume drawing used in the top banner
 # ---------------------------------------------------------------------
-RESUME_SVG = f"""<svg viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:200px;display:block;margin:auto">
-<rect x="22" y="26" width="196" height="258" rx="10" fill="#D9E3DF"/>
-<rect x="14" y="14" width="196" height="258" rx="10" fill="white" stroke="#D8D2C5"/>
-<circle cx="56" cy="58" r="20" fill="{SAGE}"/>
-<rect x="88" y="44" width="90" height="10" rx="3" fill="{INK}"/>
-<rect x="88" y="62" width="60" height="7" rx="3" fill="{CLAY}"/>
-<rect x="32" y="96" width="60" height="8" rx="3" fill="{SAGE}"/>
-<rect x="32" y="114" width="160" height="5" rx="2" fill="#D8D2C5"/>
-<rect x="32" y="126" width="150" height="5" rx="2" fill="#D8D2C5"/>
-<rect x="32" y="138" width="130" height="5" rx="2" fill="#D8D2C5"/>
-<rect x="32" y="162" width="60" height="8" rx="3" fill="{SAGE}"/>
-<rect x="32" y="180" width="160" height="5" rx="2" fill="#D8D2C5"/>
-<rect x="32" y="192" width="140" height="5" rx="2" fill="#D8D2C5"/>
-<rect x="32" y="204" width="155" height="5" rx="2" fill="#D8D2C5"/>
-<rect x="32" y="228" width="60" height="8" rx="3" fill="{SAGE}"/>
-<rect x="32" y="246" width="110" height="5" rx="2" fill="#D8D2C5"/>
+# ---------------------------------------------------------------------
+# Hero animation: CSS + resume drawing in one place
+# ---------------------------------------------------------------------
+st.markdown(
+    """
+<style>
+.hero-float {animation: heroFloat 5s ease-in-out infinite;}
+@keyframes heroFloat {
+    0%, 100% {transform: translateY(0);}
+    50% {transform: translateY(-6px);}
+}
+.hero-shadow {animation: heroShadow 5s ease-in-out infinite; transform-box: fill-box; transform-origin: center;}
+@keyframes heroShadow {
+    0%, 100% {transform: scale(1); opacity: 0.2;}
+    50% {transform: scale(0.88); opacity: 0.1;}
+}
+.hero-bar {transform-box: fill-box; transform-origin: left center; animation: heroGrow 7s ease-out infinite;}
+@keyframes heroGrow {
+    0% {transform: scaleX(0);}
+    30%, 92% {transform: scaleX(1);}
+    100% {transform: scaleX(0);}
+}
+.hero-badge {transform-box: fill-box; transform-origin: center; animation: heroBadge 7s ease-out infinite;}
+@keyframes heroBadge {
+    0%, 42% {transform: scale(0); opacity: 0;}
+    52% {transform: scale(1.12); opacity: 1;}
+    58%, 92% {transform: scale(1); opacity: 1;}
+    100% {transform: scale(1); opacity: 0;}
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+RESUME_SVG = f"""<svg viewBox="0 0 260 310" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:230px;display:block;margin:auto;overflow:visible">
+<defs><clipPath id="hero-av"><circle cx="60" cy="51" r="19"/></clipPath></defs>
+
+<!-- ground shadow -->
+<ellipse class="hero-shadow" cx="114" cy="296" rx="64" ry="7" fill="{INK}"/>
+
+<g class="hero-float">
+  <!-- page + offset sheet behind -->
+  <rect x="32" y="30" width="180" height="244" rx="10" fill="#D9E3DF"/>
+  <rect x="24" y="20" width="180" height="244" rx="10" fill="white" stroke="#D8D2C5" stroke-width="1.5"/>
+
+  <!-- header band -->
+  <rect x="24" y="20" width="180" height="64" rx="10" fill="{SAGE}"/>
+  <rect x="24" y="66" width="180" height="18" fill="{SAGE}"/>
+
+  <!-- profile silhouette -->
+  <circle cx="60" cy="51" r="19" fill="{SAGE_LIGHT}"/>
+  <g clip-path="url(#hero-av)">
+    <circle cx="60" cy="46" r="7" fill="{SAGE}"/>
+    <path d="M43 72 Q43 58 60 58 Q77 58 77 72 Z" fill="{SAGE}"/>
+  </g>
+  <circle cx="60" cy="51" r="19" fill="none" stroke="white" stroke-width="2"/>
+
+  <!-- name + title -->
+  <rect x="90" y="38" width="84" height="9" rx="3" fill="white"/>
+  <rect x="90" y="54" width="54" height="6" rx="3" fill="{CLAY}"/>
+
+  <!-- section: experience -->
+  <rect x="42" y="102" width="46" height="7" rx="2" fill="{SAGE}"/>
+  <rect x="94" y="105" width="94" height="1.5" fill="{LINE}"/>
+  <circle cx="45" cy="124" r="2.5" fill="{CLAY}"/>
+  <rect class="hero-bar" x="54" y="121" width="126" height="5" rx="2" fill="#D8D2C5" style="animation-delay:0.1s"/>
+  <circle cx="45" cy="137" r="2.5" fill="{CLAY}"/>
+  <rect class="hero-bar" x="54" y="134" width="108" height="5" rx="2" fill="#D8D2C5" style="animation-delay:0.3s"/>
+  <circle cx="45" cy="150" r="2.5" fill="{CLAY}"/>
+  <rect class="hero-bar" x="54" y="147" width="118" height="5" rx="2" fill="#D8D2C5" style="animation-delay:0.5s"/>
+
+  <!-- section: education -->
+  <rect x="42" y="172" width="46" height="7" rx="2" fill="{SAGE}"/>
+  <rect x="94" y="175" width="94" height="1.5" fill="{LINE}"/>
+  <rect class="hero-bar" x="42" y="190" width="130" height="5" rx="2" fill="#D8D2C5" style="animation-delay:0.7s"/>
+  <rect class="hero-bar" x="42" y="202" width="90" height="5" rx="2" fill="#D8D2C5" style="animation-delay:0.9s"/>
+
+  <!-- skills -->
+  <rect class="hero-bar" x="42"  y="222" width="32" height="12" rx="6" fill="{SAGE_LIGHT}" stroke="{SAGE}" stroke-width="1" style="animation-delay:1.1s"/>
+  <rect class="hero-bar" x="80"  y="222" width="38" height="12" rx="6" fill="{SAGE_LIGHT}" stroke="{SAGE}" stroke-width="1" style="animation-delay:1.2s"/>
+  <rect class="hero-bar" x="124" y="222" width="28" height="12" rx="6" fill="{SAGE_LIGHT}" stroke="{SAGE}" stroke-width="1" style="animation-delay:1.3s"/>
+
+  <!-- success badge -->
+  <g class="hero-badge">
+    <circle cx="198" cy="248" r="24" fill="{CLAY}" stroke="white" stroke-width="4"/>
+    <path d="M187 248 L195 256 L210 239" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</g>
 </svg>""".replace("\n", "")
+
 
 # ---------------------------------------------------------------------
 # Founder photos
@@ -190,7 +263,7 @@ FOUNDERS = [
     {
         "name": "The Bens",
         "role": "Co-founders (times two)",
-        "bio": "Two Bens, one mission. What began as a serendipitous encounter this morning has turned into a lifelong friendship. As experts in the field of entymology, they give special priority to anyone with the name of Ben to succeed in life. ",
+        "bio": "Two Bens, one mission. What began as a serendipitous encounter this morning has turned into a lifelong friendship. As experts in the field of entymology, they give special priority to anyone with the name of Ben. ",
         "avatars": [("B", SAGE, "ben1"), ("B", CLAY, "ben2")],
     },
     {
@@ -202,7 +275,7 @@ FOUNDERS = [
     {
         "name": "Connor",
         "role": "Co-founder",
-        "bio": "As someone who was once like you, unemployed and desperate and searching for a better solution, he came across the other co-founders of resu.ME at a school hackathon, and instantly realized the life changing opporunity for what it was.",
+        "bio": "As someone who was once like you, unemployed and desperate and searching for a better solution, he came across the other co-founders of resu.ME at a school hackathon, and instantly realized the life changing opportunity for what it was.",
         "avatars": [("C", "#9A8F7C", "connor")],
     },
 ]
@@ -214,7 +287,7 @@ FOUNDERS = [
 def render_top():
     left, right = st.columns([3, 2], vertical_alignment="center")
     with left:
-        st.title("Welcome to resu.ME, the place where we help you get hired!")
+        st.title("Welcome to resu.ME, the place where we help you get hired!", anchor=False)
         st.markdown('<div class="accent-bar"></div>', unsafe_allow_html=True)
         st.markdown('<p class="hero-sub">Build connections, find events, land the job.</p>', unsafe_allow_html=True)
     with right:
@@ -224,17 +297,18 @@ def render_top():
     st.markdown(
         """
 <div class="who-card">
-<h3>Who we are and what we do</h3>
 <div class="who-grid">
 <div>
 <h4>Who we are</h4>
-<p>We're a small team of students who know how stressful the job hunt can be. We built resu.ME
-because getting hired shouldn't feel like guesswork.</p>
+<p> No, the real question you're asking is: "What can I become?"<br>With resu.ME we help YOU answer that question to help YOU unlock your fullest potential.
+
+</p>
 </div>
 <div>
 <h4>What we do</h4>
-<p>Tell us your major and how far you're willing to travel, and we'll help you find career fairs,
-networking events, and workshops near you, plus tools to get your resume ready.</p>
+<p>Tell us your major, your interests, and how travel range, and we'll point you to the career fairs, networking events, workshops, and resume-boosting opportunities worth your time.
+\n Show up. Stand out. Get hired.</p>
+
 </div>
 </div>
 </div>
@@ -269,7 +343,7 @@ def section_header(num, title, subtitle, optional=False):
 
 def render_profile_form():
     """Draws the profile fields and returns a complete profile, else None."""
-    st.header("Tell us about you")
+    st.header("Tell us about you", anchor=False)
 
     with st.container(border=True):
         section_header("1", "About you", "The basics, so we can match events to you.")
@@ -343,7 +417,7 @@ def render_results(profile):
     if events is None:
         return
     st.divider()
-    st.header(f"Events for you, {profile['name']}")
+    st.header(f"Events for you, {profile['name']}", anchor=False)
     where = (
         "anywhere"
         if profile["radius"] is None
@@ -439,7 +513,7 @@ def render_resume_section(profile=None):
 
 def render_founders():
     st.divider()
-    st.header("About the 4 Stooges")
+    st.header("About the 4 Stooges", anchor=False)
     st.write("")
 
     cols = st.columns(3)
