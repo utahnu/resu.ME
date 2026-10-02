@@ -7,7 +7,9 @@ authors = [
     { name = "Wilbert", email = "utahnu@byu.edu" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "streamlit>=1.64.0",
+]
 
 [project.scripts]
 the-four-stooges = "the_four_stooges:main"
