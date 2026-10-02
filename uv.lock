@@ -661,11 +661,15 @@ name = "the-four-stooges"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "pillow" },
     { name = "streamlit" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "streamlit", specifier = ">=1.64.0" }]
+requires-dist = [
+    { name = "pillow", specifier = ">=12.3.0" },
+    { name = "streamlit", specifier = ">=1.64.0" },
+]
 
 [[package]]
 name = "toml"
