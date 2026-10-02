@@ -1,0 +1,17 @@
+[project]
+name = "the-four-stooges"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Wilbert", email = "utahnu@byu.edu" }
+]
+requires-python = ">=3.14"
+dependencies = []
+
+[project.scripts]
+the-four-stooges = "the_four_stooges:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
