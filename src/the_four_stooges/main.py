@@ -7,7 +7,13 @@ from pathlib import Path
 import streamlit as st
 from PIL import Image, ImageOps
 
-from backend import events_to_csv, extract_resume_text, recommend_resume_events
+from backend import (
+    event_to_ics,
+    event_to_mailto,
+    events_to_csv,
+    extract_resume_text,
+    recommend_resume_events,
+)
 
 # =====================================================================
 # resu.ME: complete single-file version
@@ -353,10 +359,11 @@ def render_results(profile):
 
     if not events:
         st.info("No events matched. Try a larger radius, more event types, or turn on virtual events.")
-    for e in events:
+    for index, e in enumerate(events):
         title = html.escape(str(e.get("title", "Untitled event")))
         event_type = html.escape(str(e.get("type", "Opportunity")))
-        event_date = html.escape(str(e.get("date", "Date to be announced")))
+        raw_date = str(e.get("date") or "").strip()
+        event_date = html.escape(raw_date or "Date unavailable")
         place = html.escape(str(e.get("place", "Location to be announced")))
         description = html.escape(str(e.get("description", "")))
         resume_value = html.escape(str(e.get("resume_value", "")))
@@ -373,13 +380,40 @@ def render_results(profile):
             mode_tag = '<span class="tag">In person</span>'
         link = f' <a href="{url}" target="_blank">Details</a>' if url else ""
         value_html = f"<br><strong>Resume value:</strong> {resume_value}" if resume_value else ""
-        st.markdown(
+        event_card = (
             f'<div class="event"><h4>{title}</h4>'
             f'<div class="meta">{mode_tag}<span class="tag">{event_type}</span> '
             f'{event_date} · {place}{link}</div>'
-            f'{description}{value_html}<div>{skills_html}</div></div>',
-            unsafe_allow_html=True,
+            f'{description}{value_html}<div>{skills_html}</div></div>'
         )
+        with st.container(border=True):
+            event_col, calendar_col = st.columns([5, 1.2], vertical_alignment="top")
+            with event_col:
+                st.markdown(event_card, unsafe_allow_html=True)
+            with calendar_col:
+                calendar_file = event_to_ics(e)
+                st.download_button(
+                    "Add to calendar",
+                    data=calendar_file or "",
+                    file_name=f"resume_event_{index + 1}.ics",
+                    mime="text/calendar",
+                    disabled=calendar_file is None,
+                    key=f"add_to_calendar_{index}",
+                    use_container_width=True,
+                    help=(
+                        "No verified date was found for this event."
+                        if calendar_file is None
+                        else "Download an all-day calendar event."
+                    ),
+                )
+                st.link_button(
+                    "Email me this",
+                    url=event_to_mailto(e),
+                    use_container_width=True,
+                    help="Open a pre-filled email draft for this event.",
+                )
+                if calendar_file is None:
+                    st.caption("Date unavailable")
 
 
 def render_resume_section(profile=None):
@@ -397,6 +431,13 @@ def render_resume_section(profile=None):
         if profile is None:
             st.info("Fill in your name, major, and location above before requesting recommendations.")
 
+        event_count = st.selectbox(
+            "How many events should Claude find?",
+            options=list(range(1, 11)),
+            index=5,
+            key="event_count",
+        )
+
         checks = [
             "Fits on one page (two at most for experienced applicants)",
             "Contact info and a professional email at the top",
@@ -411,7 +452,9 @@ def render_resume_section(profile=None):
         with st.spinner("Reading your resume and finding targeted opportunities..."):
             try:
                 resume_text = extract_resume_text(uploaded)
-                st.session_state["resume_events"] = recommend_resume_events(profile, resume_text)
+                st.session_state["resume_events"] = recommend_resume_events(
+                    profile, resume_text, event_count
+                )
                 st.rerun()
             except (ValueError, RuntimeError, json.JSONDecodeError) as exc:
                 st.error(str(exc))
