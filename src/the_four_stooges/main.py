@@ -495,18 +495,49 @@ def render_founders():
             unsafe_allow_html=True,
         )
 
+from auto_email import send_email, is_valid_email
+from backend import ai_slop
 
-def render_newsletter_section():
+try:
+    import markdown as md
+except ImportError:
+    md = None
+
+def render_newsletter_section(resume_text=None, events=None):
     st.divider()
     if st.button("Subscribe to newsletter", use_container_width=True, key="newsletter_subscribe"):
         st.session_state["newsletter_form_open"] = True
 
     if st.session_state.get("newsletter_form_open"):
-        st.text_input(
+        email = st.text_input(
             "Email address",
             placeholder="you@example.com",
             key="newsletter_email",
         )
+
+        if st.button("Send me the newsletter", key="newsletter_send"):
+            email = email.strip()
+            if not is_valid_email(email):
+                st.error("Please enter a valid email address.")
+                return
+            if not resume_text:
+                st.warning("Upload your resume first so the stooges have something to roast.")
+                return
+
+            with st.spinner("The stooges are writing..."):
+                try:
+                    newsletter = ai_slop(resume_text, events)
+                    html = md.markdown(newsletter) if md else None
+                    send_email(
+                        to=email,
+                        body=newsletter,
+                        subject="The 4 Stooges Slop",
+                        html=html,
+                    )
+                except Exception as exc:
+                    st.error(f"Couldn't send the newsletter: {exc}")
+                else:
+                    st.success(f"Sent to {email}! Check your inbox (and spam).")
 
 
 # ---------------------------------------------------------------------
