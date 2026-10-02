@@ -577,41 +577,38 @@ try:
 except ImportError:
     md = None
 
-def render_newsletter_section(resume_text=None, events=None):
+def send_newsletter(email):
+    email = email.strip()
+    if not is_valid_email(email):
+        raise ValueError("Please enter a valid email address.")
+
+    newsletter = ai_slop(
+        "No resume provided. Write a general newsletter for job-hunting students.",
+        [],
+    )
+    send_email(
+        to=email,
+        body=newsletter,
+        subject="The 4 Stooges Slop",
+    )
+
+def render_newsletter_section():
     st.divider()
-    if st.button("Subscribe to newsletter", use_container_width=True, key="newsletter_subscribe"):
-        st.session_state["newsletter_form_open"] = True
+    st.subheader("Subscribe to the newsletter", anchor=False)
 
-    if st.session_state.get("newsletter_form_open"):
-        email = st.text_input(
-            "Email address",
-            placeholder="you@example.com",
-            key="newsletter_email",
-        )
+    with st.form("newsletter_form"):
+        email = st.text_input("Email address", placeholder="you@example.com")
+        submitted = st.form_submit_button("Send me the newsletter")
 
-        if st.button("Send me the newsletter", key="newsletter_send"):
-            email = email.strip()
-            if not is_valid_email(email):
-                st.error("Please enter a valid email address.")
-                return
-            if not resume_text:
-                st.warning("Upload your resume first so the stooges have something to roast.")
-                return
-
+    if submitted:
+        try:
             with st.spinner("The stooges are writing..."):
-                try:
-                    newsletter = ai_slop(resume_text, events)
-                    html = md.markdown(newsletter) if md else None
-                    send_email(
-                        to=email,
-                        body=newsletter,
-                        subject="The 4 Stooges Slop",
-                        html=html,
-                    )
-                except Exception as exc:
-                    st.error(f"Couldn't send the newsletter: {exc}")
-                else:
-                    st.success(f"Sent to {email}! Check your inbox (and spam).")
+                send_newsletter(email)
+        except Exception as exc:
+            st.error(f"Couldn't send the newsletter: {exc}")
+        else:
+            st.success(f"Email sent to {email.strip()}! Check your inbox (and spam).")
+
 
 
 # ---------------------------------------------------------------------
