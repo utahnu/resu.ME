@@ -147,49 +147,6 @@ RESUME_SVG = f"""<svg viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg" s
 </svg>""".replace("\n", "")
 
 # ---------------------------------------------------------------------
-# Event finder fallback
-# find_events(profile) remains a local fallback until a resume is uploaded and
-# the personalized Claude event recommender is run.
-# profile keys: name, major, location, radius (None = no limit),
-#   radius_unit, year, event_types, include_virtual, notes
-# ---------------------------------------------------------------------
-SAMPLE_EVENTS = [
-    {"title": "Spring Career Fair", "type": "Career fairs", "date": "Mar 12", "place": "Campus Student Center", "distance_mi": 3, "virtual": False,
-     "description": "Meet recruiters from local and national employers."},
-    {"title": "Alumni Networking Mixer", "type": "Networking mixers", "date": "Mar 18", "place": "Downtown Conference Hall", "distance_mi": 12, "virtual": False,
-     "description": "Casual evening to connect with alumni in your field."},
-    {"title": "Resume and LinkedIn Workshop", "type": "Workshops", "date": "Mar 20", "place": "Online", "distance_mi": 0, "virtual": True,
-     "description": "Hands-on session for polishing your resume and profile."},
-    {"title": "Regional Hackathon", "type": "Hackathons", "date": "Apr 2", "place": "Tech Hub", "distance_mi": 28, "virtual": False,
-     "description": "A weekend of building with mentors and sponsors."},
-    {"title": "Industry Panel: Breaking In", "type": "Guest speakers", "date": "Apr 9", "place": "Online", "distance_mi": 0, "virtual": True,
-     "description": "Professionals share how they landed their first roles."},
-    {"title": "Statewide Career Expo", "type": "Career fairs", "date": "Apr 22", "place": "Convention Center", "distance_mi": 65, "virtual": False,
-     "description": "Large expo with employers from many industries."},
-    {"title": "Employer Info Session", "type": "Info sessions", "date": "Apr 25", "place": "Business Building", "distance_mi": 5, "virtual": False,
-     "description": "Learn about internships and entry-level openings."},
-]
-
-
-def find_events(profile):
-    radius = profile.get("radius")
-    if radius is not None and profile.get("radius_unit") == "km":
-        radius = radius / 1.609  # convert to miles
-
-    results = []
-    for event in SAMPLE_EVENTS:
-        if event["virtual"]:
-            if not profile.get("include_virtual", True):
-                continue
-        elif radius is not None and event["distance_mi"] > radius:
-            continue
-        if profile.get("event_types") and event["type"] not in profile["event_types"]:
-            continue
-        results.append(event)
-    return results
-
-
-# ---------------------------------------------------------------------
 # Founder photos
 # Put pictures in an "images" folder next to app.py and name them:
 #   ben1, ben2, wilbert, connor   (.jpg, .jpeg, .png, or .webp)
@@ -311,7 +268,7 @@ def section_header(num, title, subtitle, optional=False):
 
 
 def render_profile_form():
-    """Draws the form. Returns the profile dict when submitted, else None."""
+    """Draws the profile fields and returns a complete profile, else None."""
     st.header("Tell us about you")
 
     with st.container(border=True):
@@ -366,26 +323,25 @@ def render_profile_form():
 
     st.write("")
 
-    if st.button("Find events for me", use_container_width=True, key="pf_submit"):
-        missing = [label for label, val in (("name", name), ("major", major), ("location", location)) if not val.strip()]
-        if missing:
-            st.warning("Please fill in your " + ", ".join(missing) + ".")
-            return None
-        return {
-            "name": name.strip(),
-            "major": major.strip(),
-            "location": location.strip(),
-            "radius": radius,  # None means no limit
-            "radius_unit": unit,
-            "year": year,
-            "event_types": event_types or [],
-            "include_virtual": include_virtual,
-            "notes": notes.strip(),
-        }
-    return None
+    if not all(value.strip() for value in (name, major, location)):
+        return None
+    return {
+        "name": name.strip(),
+        "major": major.strip(),
+        "location": location.strip(),
+        "radius": radius,  # None means no limit
+        "radius_unit": unit,
+        "year": year,
+        "event_types": event_types or [],
+        "include_virtual": include_virtual,
+        "notes": notes.strip(),
+    }
 
 
 def render_results(profile):
+    events = st.session_state.get("resume_events")
+    if events is None:
+        return
     st.divider()
     st.header(f"Events for you, {profile['name']}")
     where = (
@@ -393,14 +349,7 @@ def render_results(profile):
         if profile["radius"] is None
         else f"within {profile['radius']} {profile['radius_unit']} of {profile['location']}"
     )
-    events = st.session_state.get("resume_events")
-    if events:
-        st.caption(f"Resume-building recommendations for {profile['major']} majors, {where}.")
-    else:
-        st.caption(
-            f"{profile['major']} majors, {where}. Upload a resume below for personalized recommendations."
-        )
-        events = find_events(profile)
+    st.caption(f"Resume-building recommendations for {profile['major']} majors, {where}.")
 
     if not events:
         st.info("No events matched. Try a larger radius, more event types, or turn on virtual events.")
@@ -434,20 +383,30 @@ def render_results(profile):
 
 
 def render_resume_section(profile=None):
-    st.divider()
-    st.header("Your resume")
-    st.write("Upload your resume to find events that can add stronger evidence to it.")
+    with st.container(border=True):
+        section_header("4", "Your resume", "Upload your resume to find events that can add stronger evidence to it.")
 
-    st.caption("Your resume text is sent to Claude to generate these recommendations.")
-    uploaded = st.file_uploader(
-        "Upload your resume (PDF or Word)", type=["pdf", "docx"], key="resume_upload"
-    )
-    if uploaded:
-        st.success(f"Got it: {uploaded.name} ({round(uploaded.size / 1024)} KB)")
+        st.caption("Your resume text is sent to Claude to generate these recommendations.")
+        uploaded = st.file_uploader(
+            "Upload your resume (PDF or Word)", type=["pdf", "docx"], key="resume_upload"
+        )
+        if uploaded:
+            st.success(f"Got it: {uploaded.name} ({round(uploaded.size / 1024)} KB)")
 
-    can_recommend = profile is not None and uploaded is not None
-    if profile is None:
-        st.info("Submit your name, major, and location above before requesting recommendations.")
+        can_recommend = profile is not None and uploaded is not None
+        if profile is None:
+            st.info("Fill in your name, major, and location above before requesting recommendations.")
+
+        checks = [
+            "Fits on one page (two at most for experienced applicants)",
+            "Contact info and a professional email at the top",
+            "Each bullet starts with an action verb and shows a result",
+            "Skills and keywords match the roles you want",
+            "No typos, and the formatting is consistent",
+            "Saved as a PDF with a clean file name",
+        ]
+        st.markdown("\n".join(f"- {check}" for check in checks))
+
     if st.button("Find resume-building events", disabled=not can_recommend, key="resume_events_submit"):
         with st.spinner("Reading your resume and finding targeted opportunities..."):
             try:
@@ -459,7 +418,7 @@ def render_resume_section(profile=None):
 
     events = st.session_state.get("resume_events")
     if events:
-        st.success("Recommendations are shown above. Verify dates and availability with each organizer.")
+        st.success("Recommendations are shown below. Verify dates and availability with each organizer.")
         left, right = st.columns(2)
         payload = json.dumps({"events": events}, indent=2)
         left.download_button(
@@ -476,16 +435,6 @@ def render_resume_section(profile=None):
             mime="text/csv",
             use_container_width=True,
         )
-
-    checks = [
-        "Fits on one page (two at most for experienced applicants)",
-        "Contact info and a professional email at the top",
-        "Each bullet starts with an action verb and shows a result",
-        "Skills and keywords match the roles you want",
-        "No typos, and the formatting is consistent",
-        "Saved as a PDF with a clean file name",
-    ]
-    st.markdown("\n".join(f"- {check}" for check in checks))
 
 
 def render_founders():
@@ -512,15 +461,15 @@ st.write("")
 render_how_it_works()
 st.divider()
 
-submitted_profile = render_profile_form()
-if submitted_profile:
-    st.session_state["profile"] = submitted_profile
+profile = render_profile_form()
+if profile != st.session_state.get("profile"):
+    st.session_state["profile"] = profile
     st.session_state.pop("resume_events", None)
 
-if "profile" in st.session_state:
-    render_results(st.session_state["profile"])
+render_resume_section(profile)
 
-render_resume_section(st.session_state.get("profile"))
+if profile is not None:
+    render_results(profile)
 render_founders()
 
 st.markdown('<div class="footer-note">© resu.ME</div>', unsafe_allow_html=True)
