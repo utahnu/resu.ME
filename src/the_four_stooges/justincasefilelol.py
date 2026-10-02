@@ -1,4 +1,10 @@
+import base64
+import io
+from pathlib import Path
+
 import streamlit as st
+from PIL import Image, ImageOps
+
 # =====================================================================
 # resu.ME: complete single-file version
 # Run with:  streamlit run app.py
@@ -100,6 +106,8 @@ label p {{color: {INK}; font-weight: 500; font-size: 0.92rem;}}
 .avatars {{display: flex; justify-content: center; margin-bottom: 0.7rem;}}
 .avatar {{width: 56px; height: 56px; line-height: 56px; border-radius: 50%; color: white; font-weight: 600;
     font-size: 1.1rem; border: 3px solid white;}}
+.avatar.photo {{padding: 0; overflow: hidden; background: white;}}
+.avatar.photo img {{width: 100%; height: 100%; object-fit: cover; display: block;}}
 .avatar + .avatar {{margin-left: -14px;}}
 .founder h4 {{font-family: 'Fraunces', Georgia, serif; color: {INK}; margin: 0 0 0.15rem; font-size: 1.1rem;}}
 .founder .role {{color: {CLAY}; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.5rem;}}
@@ -177,28 +185,66 @@ def find_events(profile):
 
 
 # ---------------------------------------------------------------------
+# Founder photos
+# Put pictures in an "images" folder next to app.py and name them:
+#   ben1, ben2, wilbert, connor   (.jpg, .jpeg, .png, or .webp)
+# If a photo is missing, the person's initial is shown instead.
+# ---------------------------------------------------------------------
+IMG_DIR = Path(__file__).parent / "images"
+PHOTO_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
+
+
+def find_photo(stem):
+    if not IMG_DIR.is_dir():
+        return None
+    for path in IMG_DIR.iterdir():
+        if path.stem.lower() == stem and path.suffix.lower() in PHOTO_EXTS:
+            return path
+    return None
+
+
+@st.cache_data(show_spinner=False)
+def photo_data_uri(path_str, modified_time):
+    """Crop to a square, shrink, and return the photo as an inline data URI."""
+    img = ImageOps.exif_transpose(Image.open(path_str)).convert("RGB")
+    img = ImageOps.fit(img, (160, 160))
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", quality=85)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+def avatar_html(letter, color, stem):
+    path = find_photo(stem)
+    if path:
+        uri = photo_data_uri(str(path), path.stat().st_mtime)
+        return f'<div class="avatar photo"><img src="{uri}" alt="{letter}"></div>'
+    return f'<div class="avatar" style="background:{color}">{letter}</div>'
+
+
+# ---------------------------------------------------------------------
 # Founders data
 # ---------------------------------------------------------------------
 FOUNDERS = [
     {
-        "name": "The Ben's",
+        "name": "The Bens",
         "role": "Co-founders (times two)",
-        "bio": "Two Bens, one mission. Replace this with a short line about what the Ben's do and what they love about resu.ME.",
-        "avatars": [("B", SAGE), ("B", CLAY)],
+        "bio": "Two Bens, one mission. What began as a serendipitous encounter this morning has turned into a lifelong friendship. As experts in the field of entymology, they give special priority to anyone with the name of Ben to succeed in life. ",
+        "avatars": [("B", SAGE, "ben1"), ("B", CLAY, "ben2")],
     },
     {
         "name": "Wilbert the Guy",
         "role": "Co-founder",
-        "bio": "Replace this with a short line about Wilbert: his role, his background, and why he's here.",
-        "avatars": [("W", "#7C9A92")],
+        "bio": "The main brain. Megamind. Legend. These are just a few of the many accolades he has collected over the years. Behind every great service is an even greater inventor, and his name is Wilbert. All the good we do here at resu.ME wouldn't be possible without him.",
+        "avatars": [("W", "#7C9A92", "wilbert")],
     },
     {
         "name": "Connor",
         "role": "Co-founder",
-        "bio": "Replace this with a short line about Connor: his role, his background, and why he's here.",
-        "avatars": [("C", "#9A8F7C")],
+        "bio": "As someone who was once like you, unemployed and desperate and searching for a better solution, he came across the other co-founders of resu.ME at a school hackathon, and instantly realized the life changing opporunity for what it was.",
+        "avatars": [("C", "#9A8F7C", "connor")],
     },
 ]
+
 
 
 # ---------------------------------------------------------------------
@@ -390,9 +436,7 @@ def render_founders():
 
     cols = st.columns(3)
     for col, f in zip(cols, FOUNDERS):
-        avatars = "".join(
-            f'<div class="avatar" style="background:{color}">{letter}</div>' for letter, color in f["avatars"]
-        )
+        avatars = "".join(avatar_html(letter, color, stem) for letter, color, stem in f["avatars"])
         col.markdown(
             f'<div class="founder"><div class="avatars">{avatars}</div>'
             f'<h4>{f["name"]}</h4><div class="role">{f["role"]}</div><p>{f["bio"]}</p></div>',
