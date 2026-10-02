@@ -588,7 +588,7 @@ def send_newsletter(email):
     send_email(
         to=email,
         body=newsletter,
-        subject="The 4 Stooges Slop",
+        subject="Advice from Resu.ME",
     )
 
 def render_newsletter_section():
