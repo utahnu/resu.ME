@@ -109,7 +109,8 @@ label p {{color: {INK}; font-weight: 500; font-size: 0.92rem;}}
 .avatar.photo {{padding: 0; overflow: hidden; background: white;}}
 .avatar.photo img {{width: 100%; height: 100%; object-fit: cover; display: block;}}
 .avatar + .avatar {{margin-left: -14px;}}
-.founder h4 {{font-family: 'Fraunces', Georgia, serif; color: {INK}; margin: 0 0 0.15rem; font-size: 1.1rem;}}
+.founder h4 {{font-family: 'Fraunces', Georgia, serif; color: {INK}; margin: 0 0 0.15rem; font-size: 1.1rem;
+    width: 100%; text-align: center !important;}}
 .founder .role {{color: {CLAY}; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.5rem;}}
 .founder p {{color: {MUTED}; font-size: 0.9rem; line-height: 1.5; margin: 0;}}
 
@@ -425,8 +426,7 @@ def render_resume_section():
         "No typos, and the formatting is consistent",
         "Saved as a PDF with a clean file name",
     ]
-    done = sum(st.checkbox(c, key=f"check_{i}") for i, c in enumerate(checks))
-    st.progress(done / len(checks), text=f"{done} of {len(checks)} complete")
+    st.markdown("\n".join(f"- {check}" for check in checks))
 
 
 def render_founders():
