@@ -293,9 +293,9 @@ FOUNDERS = [
 def render_top():
     left, right = st.columns([3, 2], vertical_alignment="center")
     with left:
-        st.title("Welcome to resu.ME, the place where we help you get hired!", anchor=False)
+        st.title("Welcome to resu.ME, the place where we help you find events to build your resume!", anchor=False)
         st.markdown('<div class="accent-bar"></div>', unsafe_allow_html=True)
-        st.markdown('<p class="hero-sub">Build connections, find events, land the job.</p>', unsafe_allow_html=True)
+        st.markdown('<p class="hero-sub">Find events, build connections, land the job.</p>', unsafe_allow_html=True)
     with right:
         st.markdown(RESUME_SVG, unsafe_allow_html=True)
 
@@ -494,7 +494,6 @@ def render_resume_section(profile=None):
     with st.container(border=True):
         section_header("4", "Your resume", "Upload your resume to find events that can add stronger evidence to it.")
 
-        st.caption("Your resume text is sent to Claude to generate these recommendations.")
         uploaded = st.file_uploader(
             "Upload your resume (PDF or Word)", type=["pdf", "docx"], key="resume_upload"
         )
@@ -506,7 +505,7 @@ def render_resume_section(profile=None):
             st.info("Fill in your name, major, and location above before requesting recommendations.")
 
         event_count = st.selectbox(
-            "How many events should Claude find?",
+            "How many event recommendations should we find?",
             options=list(range(1, 11)),
             index=5,
             key="event_count",
